@@ -36,10 +36,20 @@ git clone --recurse-submodules git@github.com:hackariens/quasar.git quasar
 cd quasar
 ```
 
+## Environnment
+
+Edit .env with .env.example
+
 ## Install
 
 ``` sh
 npm install
+```
+
+## Launch
+
+``` sh
+npm run exec
 ```
 
 ## Author
