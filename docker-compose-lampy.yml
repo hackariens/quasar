@@ -1,0 +1,15 @@
+version: "3.4"
+networks:
+  proxylampy:
+    external: true
+services:
+  www:
+    networks:
+      - proxylampy
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.quasar.rule=Host(`quasar.traefik.me`)"
+        - "traefik.http.routers.quasar-tls.tls.domains[0].main=quasar.traefik.me"
+        - "traefik.http.routers.quasar.tls=true"
+        - "traefik.http.services.quasar.loadbalancer.server.port=80"
