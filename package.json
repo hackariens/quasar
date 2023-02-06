@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Templates pour la création d'un nouveau projet quasar",
   "scripts": {
+    "create:apps": "npm install -g @quasar/cli && quasar create apps",
     "docker:deploy": "korojscommands docker_deploy",
     "docker:getpull-image": "korojscommands docker_getpull-image",
     "docker:ls": "korojscommands docker_ls",
