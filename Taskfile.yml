@@ -1,0 +1,148 @@
+version: 3
+
+# Taskfile principal - Tâches globales et inclusions
+# Charge automatiquement les variables depuis le fichier .env s'il existe
+dotenv: [ '.env' ]
+
+includes:
+  docker: ./taskfiles/docker/Taskfile.yml
+  utils: ./taskfiles/utils/Taskfile.yml
+  env: ./taskfiles/env/Taskfile.yml
+  nodejs: ./taskfiles/nodejs/Taskfile.yml
+  download: ./taskfiles/download/Taskfile.yml
+
+vars:
+  # Variables avec valeurs par défaut depuis .env ou valeurs de fallback
+  PROJECT_NAME: '{{.PROJECT_NAME | default "quasar"}}'
+  PROJECT_VERSION: '1.0.0'
+  ENVIRONMENT: '{{.ENVIRONMENT | default "development"}}'
+  STACK_NAME: '{{.STACK | default "quasar"}}'
+  FOLDERLAMPY: '{{.FOLDERLAMPY | default "lampy"}}'
+  SERVERNAME: '{{.SERVERNAME | default "quasar.traefik.me"}}'
+  DOCKERCOMPOSEFILE: '{{.DOCKERCOMPOSEFILE | default "docker-compose.yml"}}'
+
+tasks:
+  default:
+    desc: "Affiche l'aide et les tâches disponibles"
+    silent: true
+    cmds:
+    - echo "🛠️  Collection de Taskfiles pour le développement"
+    - echo ""
+    - echo "Tâches globales disponibles :"
+    - task --list
+    - echo ""
+
+  info:
+    desc: "Affiche les informations du projet avec les variables d'environnement"
+    silent: true
+    cmds:
+    - |
+      echo "🛠️  {{.PROJECT_NAME}} v{{.PROJECT_VERSION}} - Collection de Taskfiles"
+      echo "Environnement: {{.ENVIRONMENT}}"
+
+  help:
+    desc: "Affiche l'aide détaillée"
+    aliases: [ h ]
+    cmds:
+    - task: default
+
+  quasar:getpull-image:
+    desc: "Télécharge les images Docker définies dans le docker-compose.yml"
+    silent: true
+    cmds:
+    - task: docker:images:pull
+      vars:
+        COMPOSE_FILE: "{{.DOCKERCOMPOSEFILE}}"
+
+  quasar:deploy:
+    desc: "Déploie les stacks Docker définies dans les fichiers docker-compose"
+    silent: true
+    cmds:
+    - task: docker:stack:deploy
+      vars:
+        COMPOSE_FILE: "{{.DOCKERCOMPOSEFILE}}"
+        STACK_NAME: "{{.STACK_NAME}}"
+
+  quasar:waiting:
+    desc: "Attend que les services soient opérationnels"
+    silent: true
+    cmds:
+    - task: docker:stack:check:containers:ready
+      vars:
+        CONTAINERS: "www"
+        STACK_NAME: "{{.STACK_NAME}}"
+
+  quasar:ls:
+    desc: "Liste les stacks et services Docker"
+    silent: true
+    cmds:
+    - task: docker:stack:services
+      vars:
+        STACK_NAME: "{{.STACK_NAME}}"
+
+  create:apps:
+    desc: "Crée une nouvelle application quasar dans le dossier apps"
+    cmds:
+    - npm i -g @quasar/cli && npm init quasar@latest
+    - |
+      echo "✅ Application Quasar créée!"
+      echo "🌐 URLs d'accès :"
+      echo "   Local (lampy): https://quasar.traefik.me"
+      echo "   Production: https://quasar.hackariens.fr"
+      echo "💡 Lancez 'task quasar:exec' pour déployer"
+  
+  update:config:
+    desc: "Met à jour la configuration de l'application Quasar pour le développement"
+    silent: true
+    cmds:
+    - | 
+      echo "🔧 Configuration du serveur de développement..."
+      
+      # Rechercher le fichier quasar.config.js dans apps/
+      CONFIG_FILE=$(find apps/ -name "quasar.config.js" -type f | head -1)
+      
+      if [ -n "$CONFIG_FILE" ]; then
+        echo "📁 Fichier trouvé: $CONFIG_FILE"
+        
+        # Vérifier si allowedHosts existe dans devServer
+        if grep -A 10 "devServer:" "$CONFIG_FILE" | grep -q "allowedHosts"; then
+          echo "� allowedHosts trouvé, vérification si {{.SERVERNAME}} est présent..."
+          
+          # Vérifier si SERVERNAME est déjà présent dans allowedHosts
+          if grep -A 10 "devServer:" "$CONFIG_FILE" | grep "allowedHosts" | grep -q "{{.SERVERNAME}}"; then
+            echo "✅ {{.SERVERNAME}} est déjà présent dans allowedHosts"
+          else
+            echo "➕ Ajout de {{.SERVERNAME}} à allowedHosts existant..."
+            # Ajouter SERVERNAME au tableau allowedHosts existant
+            sed -i '/allowedHosts:/s/\]/,"{{.SERVERNAME}}"]/' "$CONFIG_FILE"
+          fi
+        else
+          echo "➕ Création de allowedHosts avec {{.SERVERNAME}}..."
+          # Ajouter allowedHosts dans la section devServer
+          sed -i '/devServer:/,/},/s/open: false/allowedHosts: ["{{.SERVERNAME}}"],\n      open: false/' "$CONFIG_FILE"
+        fi
+        
+        echo "✅ Configuration vérifiée/mise à jour"
+        echo "📋 allowedHosts actuel:"
+        grep -A 10 "devServer:" "$CONFIG_FILE" | grep "allowedHosts" || echo "   Non trouvé"
+      else
+        echo "⚠️  Aucun fichier quasar.config.js trouvé dans apps/"
+        echo "📂 Contenu du dossier apps:"
+        ls -la apps/ || echo "Dossier apps inexistant"
+      fi
+
+  quasar:exec:
+    desc: "Exécute une commande dans un conteneur en cours d'exécution"
+    cmds:
+    - task: quasar:getpull-image
+    - task: quasar:deploy
+    - task: quasar:waiting
+    - task: quasar:ls
+
+  quasar:bash:
+    desc: "Ouvre un shell bash dans le conteneur www"
+    cmds:
+    - task: docker:stack:shell
+      vars:
+        STACK_NAME: "quasar"
+        SERVICE_NAME: "www"
