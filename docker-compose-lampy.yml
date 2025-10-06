@@ -4,6 +4,12 @@ networks:
     external: true
 services:
   www:
+    image: node:22.12.0
+    working_dir: /app
+    command: >
+      sh -c "npm install -g @quasar/cli && npm install && quasar dev"
+    volumes:
+      - ${PWD}/apps:/app:delegated
     networks:
       - proxylampy
     deploy:
@@ -12,4 +18,4 @@ services:
         - "traefik.http.routers.quasar.rule=Host(`quasar.traefik.me`)"
         - "traefik.http.routers.quasar-tls.tls.domains[0].main=quasar.traefik.me"
         - "traefik.http.routers.quasar.tls=true"
-        - "traefik.http.services.quasar.loadbalancer.server.port=80"
+        - "traefik.http.services.quasar.loadbalancer.server.port=9000"
