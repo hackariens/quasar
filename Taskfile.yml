@@ -43,6 +43,7 @@ tasks:
   help:
     desc: "Affiche l'aide détaillée"
     aliases: [ h ]
+    silent: true
     cmds:
     - task: default
 
@@ -82,6 +83,7 @@ tasks:
 
   create:apps:
     desc: "Crée une nouvelle application quasar dans le dossier apps"
+    silent: true
     cmds:
     - npm i -g @quasar/cli && npm init quasar@latest
     - |
@@ -90,17 +92,17 @@ tasks:
       echo "   Local (lampy): https://quasar.traefik.me"
       echo "   Production: https://quasar.hackariens.fr"
       echo "💡 Lancez 'task quasar:exec' pour déployer"
-  
+
   update:config:
     desc: "Met à jour la configuration de l'application Quasar pour le développement"
     silent: true
     cmds:
-    - | 
+    - |
       echo "🔧 Configuration du serveur de développement..."
-      
+
       # Rechercher le fichier quasar.config.js dans apps/
       CONFIG_FILE=$(find apps/ -name "quasar.config.js" -type f | head -1)
-      
+
       if [ -n "$CONFIG_FILE" ]; then
         echo "📁 Fichier trouvé: $CONFIG_FILE"
         
@@ -133,6 +135,7 @@ tasks:
 
   quasar:exec:
     desc: "Exécute une commande dans un conteneur en cours d'exécution"
+    silent: true
     cmds:
     - task: quasar:getpull-image
     - task: quasar:deploy
@@ -141,6 +144,7 @@ tasks:
 
   quasar:bash:
     desc: "Ouvre un shell bash dans le conteneur www"
+    silent: true
     cmds:
     - task: docker:stack:shell
       vars:
