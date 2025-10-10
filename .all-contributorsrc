@@ -65,6 +65,17 @@
         "code",
         "maintenance"
       ]
+    },
+    {
+      "login": "lgtm-migrator",
+      "name": "LGTM Migrator",
+      "avatar_url": "https://avatars.githubusercontent.com/u/116650770?v=4",
+      "profile": "https://github.blog/2022-08-15-the-next-step-for-lgtm-com-github-code-scanning/",
+      "contributions": [
+        "bug",
+        "code",
+        "maintenance"
+      ]
     }
   ]
 }
